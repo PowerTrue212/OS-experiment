@@ -1,5 +1,6 @@
 #include <default_pmm.h>
 #include <best_fit_pmm.h>
+#include <buddy_pmm.h>
 #include <defs.h>
 #include <error.h>
 #include <memlayout.h>
@@ -34,7 +35,7 @@ static void check_alloc_page(void);
 
 // init_pmm_manager - initialize a pmm_manager instance
 static void init_pmm_manager(void) {
-    pmm_manager = &default_pmm_manager;
+    pmm_manager = &buddy_pmm_manager;
     cprintf("memory management: %s\n", pmm_manager->name);
     pmm_manager->init();
 }
@@ -62,6 +63,66 @@ size_t nr_free_pages(void) {
 }
 
 //lab2 function1 YOUR CODE
+/* page_init - 根据设备树报告的物理内存信息建立 Page 描述符布局，并把排除
+ * OpenSBI、内核镜像和描述符数组之后完整空闲页交给当前 pmm_manager。
+ * 无参数、无返回值，由 pmm_init() 调用。 */
+static void page_init(void) {
+    /* 1. 内核虚拟地址与物理地址之间的固定偏移。必须最先设置，
+     *    后面所有 PADDR 都用它。 */
+    va_pa_offset = PHYSICAL_MEMORY_OFFSET;
+
+    /* end 是链接脚本给出的内核镜像结尾虚拟地址 */
+    extern char end[];
+
+    uint64_t mem_base = get_memory_base();
+    uint64_t mem_size = get_memory_size();
+
+    /* 2. 设备树信息无效则终止初始化，绝不带着错误布局继续 */
+    if (mem_base == 0 || mem_size == 0 || mem_base < DRAM_BASE) {
+        panic("page_init: invalid physical memory info (base=0x%lx, size=0x%lx)",
+              mem_base, mem_size);
+    }
+
+    /* 可管理物理内存上界：不越过设备树报告的末端，也不越过框架声明的上限 */
+    uint64_t mem_end = mem_base + mem_size;
+    if (mem_end > PHYSICAL_MEMORY_END) {
+        mem_end = PHYSICAL_MEMORY_END;
+    }
+
+    cprintf("physical memory map:\n");
+    cprintf("  memory: 0x%016lx, [0x%016lx, 0x%016lx].\n", mem_size, mem_base,
+            mem_end - 1);
+
+    /* 3. npage 是可管理的物理页号上界（不是页数），末端向下按页对齐 */
+    npage = ROUNDDOWN(mem_end, PGSIZE) / PGSIZE;
+
+    /* 4. Page 描述符数组紧接内核镜像之后，起点按页对齐。
+     *    end 是 char[] 数组符号，先转成整数类型，否则 ROUNDUP 里的
+     *    typeof(end) 是数组类型，强制转换不合法。 */
+    pages = (struct Page *)ROUNDUP((uintptr_t)end, PGSIZE);
+
+    /* 描述符数组覆盖物理页号区间 [nbase, npage)。先把每个描述符都置为
+     * 保留状态，防止尚未完成布局的页面被提前分配。 */
+    size_t nr_desc = npage - nbase;
+    size_t i;
+    for (i = 0; i < nr_desc; i++) {
+        struct Page *p = pages + i;
+        p->flags = 0;
+        p->property = 0;
+        set_page_ref(p, 0);
+        SetPageReserved(p);
+    }
+
+    /* 5. 空闲区起点：描述符数组末尾的虚拟地址经 PADDR 转成物理地址，
+     *    再向上按页对齐；终点是可管理物理内存末端（已是页对齐的 npage*PGSIZE） */
+    uintptr_t free_start = ROUNDUP(PADDR(pages + nr_desc), PGSIZE);
+    uintptr_t free_end = npage * PGSIZE;
+
+    /* 只有非空的完整页面区间才交给 pmm_manager */
+    if (free_start < free_end) {
+        init_memmap(pa2page(free_start), (free_end - free_start) / PGSIZE);
+    }
+}
 
 /* pmm_init - initialize the physical memory management */
 void pmm_init(void) {
