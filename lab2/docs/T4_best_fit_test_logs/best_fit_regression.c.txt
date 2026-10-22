@@ -1,0 +1,141 @@
+/*
+ * Extra T4 regression, for the isolated test copy only.
+ * Append this snippet to the COPY of kern/mm/best_fit_pmm.c and call
+ * best_fit_extra_check() after the normal allocator check in that copy.
+ * Do not inject it into the submitted kernel or change either official test.
+ *
+ * This function owns a 32-page arena. While the real free list is hidden,
+ * only descriptors inside that allocated arena are touched. Saving the whole
+ * free_area by value is safe because the head itself keeps its address and
+ * no hidden list nodes are changed. Consume the temporary list completely
+ * before restoring that saved head, then return all 32 pages.
+ */
+void
+best_fit_extra_check(void) {
+    size_t original_total = nr_free_pages();
+    struct Page *arena = alloc_pages(32);
+    assert(arena != NULL && nr_free_pages() == original_total - 32);
+    cprintf("T4 regression PASS: borrow 32 pages; real free count decreases by 32\n");
+
+    free_area_t real_free_area = free_area;
+    unsigned int real_free_count = nr_free;
+    list_init(&free_list);
+    nr_free = 0;
+
+    /* Model initially reserved descriptors without touching the real list. */
+    for (size_t i = 0; i < 32; i++) {
+        arena[i].flags = 0;
+        arena[i].property = 0;
+        set_page_ref(arena + i, 0);
+        list_init(&arena[i].page_link);
+        SetPageReserved(arena + i);
+    }
+
+    /* Three adjacent segments, registered from high addresses to low. */
+    best_fit_init_memmap(arena + 16, 8);
+    best_fit_init_memmap(arena + 8, 8);
+    best_fit_init_memmap(arena, 8);
+    assert(nr_free == 24 && PageProperty(arena) && arena->property == 24);
+    assert(list_next(&free_list) == &arena->page_link &&
+           list_prev(&free_list) == &arena->page_link);
+    assert(!PageProperty(arena + 8) && !PageProperty(arena + 16));
+    cprintf("T4 regression PASS: reverse registration of 3 x 8 pages merges into 24\n");
+
+    assert(alloc_pages(24) == arena && nr_free == 0 && list_empty(&free_list));
+    cprintf("T4 regression PASS: allocate all 24 temporary pages; list becomes empty\n");
+
+    /* Layout inside arena[0..24):
+     * [0..5) free, 5 guard, [6..9) free, 9 guard,
+     * [10..14) free, 14 guard, [15..18) allocated, [18..24) guard.
+     */
+    free_pages(arena, 5);
+    free_pages(arena + 6, 3);
+    free_pages(arena + 10, 4);
+    assert(nr_free == 12 && alloc_pages(6) == NULL && nr_free == 12);
+    cprintf("T4 regression PASS: 12 free pages cannot satisfy a contiguous 6-page request\n");
+
+    struct Page *small = alloc_pages(2);
+    assert(small == arena + 6 && nr_free == 10);
+    assert(!PageProperty(small) && PageProperty(arena + 8) &&
+           arena[8].property == 1);
+    cprintf("T4 regression PASS: request 2 chooses the 3-page block and leaves 1 page\n");
+
+    struct Page *exact = alloc_pages(4);
+    assert(exact == arena + 10 && nr_free == 6 && !PageProperty(exact));
+    cprintf("T4 regression PASS: request 4 chooses the exact 4-page block\n");
+
+    /* Return the two pages; they rejoin their one-page split remainder. */
+    free_pages(small, 2);
+    free_pages(arena + 15, 3);
+    assert(nr_free == 11 && PageProperty(arena + 6) &&
+           arena[6].property == 3 && PageProperty(arena + 15) &&
+           arena[15].property == 3);
+    cprintf("T4 regression PASS: split remainder rejoins and two equal 3-page blocks exist\n");
+
+    struct Page *tied = alloc_pages(3);
+    assert(tied == arena + 6 && nr_free == 8);
+    cprintf("T4 regression PASS: equal-size candidates choose the lower address\n");
+
+    /* All four free blocks now exist; only the nine guard pages remain held. */
+    free_pages(tied, 3);
+    free_pages(exact, 4);
+    assert(nr_free == 15 && arena->property == 5 &&
+           arena[6].property == 3 && arena[10].property == 4 &&
+           arena[15].property == 3);
+    cprintf("T4 regression PASS: all candidate allocations returned; guards keep blocks apart\n");
+
+    free_pages(arena + 5, 1);
+    assert(nr_free == 16 && arena->property == 9 && !PageProperty(arena + 6));
+    cprintf("T4 regression PASS: freeing guard 5 merges predecessor and successor to 9 pages\n");
+
+    free_pages(arena + 9, 1);
+    assert(nr_free == 17 && arena->property == 14 && !PageProperty(arena + 10));
+    cprintf("T4 regression PASS: freeing guard 9 merges both neighbors to 14 pages\n");
+
+    free_pages(arena + 14, 1);
+    assert(nr_free == 18 && arena->property == 18 && !PageProperty(arena + 15));
+    cprintf("T4 regression PASS: freeing guard 14 merges both neighbors to 18 pages\n");
+
+    free_pages(arena + 18, 6);
+    assert(nr_free == 24 && arena->property == 24 && PageProperty(arena));
+    assert(list_next(&free_list) == &arena->page_link &&
+           list_prev(&free_list) == &arena->page_link);
+    cprintf("T4 regression PASS: freeing the final 6 guards restores one 24-page block\n");
+
+    assert(alloc_pages(24) == arena && nr_free == 0 && list_empty(&free_list));
+    cprintf("T4 regression PASS: consume the temporary list before restoring the real list\n");
+
+    /* The final eight pages stayed reserved. Convert the entire owned arena
+     * back to allocated descriptors before returning it to the real PMM.
+     */
+    for (size_t i = 0; i < 32; i++) {
+        arena[i].flags = 0;
+        arena[i].property = 0;
+        set_page_ref(arena + i, 0);
+        list_init(&arena[i].page_link);
+    }
+    free_area = real_free_area;
+    assert(nr_free == real_free_count);
+    cprintf("T4 regression PASS: restore the hidden real list and its exact free count\n");
+
+    free_pages(arena, 32);
+    assert(nr_free_pages() == original_total);
+    cprintf("T4 regression PASS: return all 32 borrowed pages; no page-count leak\n");
+
+    size_t counted = 0;
+    struct Page *previous = NULL;
+    list_entry_t *le = &free_list;
+    while ((le = list_next(le)) != &free_list) {
+        struct Page *p = le2page(le, page_link);
+        assert(PageProperty(p) && p->property > 0);
+        assert(list_next(list_prev(le)) == le && list_prev(list_next(le)) == le);
+        if (previous != NULL) {
+            assert(previous + previous->property < p);
+        }
+        counted += p->property;
+        previous = p;
+    }
+    assert(counted == nr_free_pages());
+    cprintf("T4 regression PASS: restored list is ordered, coalesced and count-consistent\n");
+    cprintf("T4 regression ALL PASS\n");
+}

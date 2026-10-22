@@ -1,0 +1,69 @@
+
+OpenSBI v0.4 (Jul  2 2019 11:53:53)
+   ____                    _____ ____ _____
+  / __ \                  / ____|  _ \_   _|
+ | |  | |_ __   ___ _ __ | (___ | |_) || |
+ | |  | | '_ \ / _ \ '_ \ \___ \|  _ < | |
+ | |__| | |_) |  __/ | | |____) | |_) || |_
+  \____/| .__/ \___|_| |_|_____/|____/_____|
+        | |
+        |_|
+
+Platform Name          : QEMU Virt Machine
+Platform HART Features : RV64ACDFIMSU
+Platform Max HARTs     : 8
+Current Hart           : 0
+Firmware Base          : 0x80000000
+Firmware Size          : 112 KB
+Runtime SBI Version    : 0.1
+
+PMP0: 0x0000000080000000-0x000000008001ffff (A)
+PMP1: 0x0000000000000000-0xffffffffffffffff (A,R,W,X)
+DTB Init
+HartID: 0
+DTB Address: 0x82200000
+Physical Memory from DTB:
+  Base: 0x0000000080000000
+  Size: 0x0000000008000000 (128 MB)
+  End:  0x0000000087ffffff
+DTB init completed
+(THU.CST) os is loading ...
+Special kernel symbols:
+  entry  0xffffffffc02000d8 (virtual)
+  etext  0xffffffffc020357c (virtual)
+  edata  0xffffffffc0209018 (virtual)
+  end    0xffffffffc020920c (virtual)
+Kernel executable memory footprint: 37KB
+memory management: best_fit_pmm_manager
+physical memory map:
+  memory: 0x0000000008000000, [0x0000000080000000, 0x0000000087ffffff].
+check_alloc_page() succeeded!
+T4 regression PASS: borrow 32 pages; real free count decreases by 32
+T4 regression PASS: reverse registration of 3 x 8 pages merges into 24
+T4 regression PASS: allocate all 24 temporary pages; list becomes empty
+T4 regression PASS: 12 free pages cannot satisfy a contiguous 6-page request
+T4 regression PASS: request 2 chooses the 3-page block and leaves 1 page
+T4 regression PASS: request 4 chooses the exact 4-page block
+T4 regression PASS: split remainder rejoins and two equal 3-page blocks exist
+T4 regression PASS: equal-size candidates choose the lower address
+T4 regression PASS: all candidate allocations returned; guards keep blocks apart
+T4 regression PASS: freeing guard 5 merges predecessor and successor to 9 pages
+T4 regression PASS: freeing guard 9 merges both neighbors to 14 pages
+T4 regression PASS: freeing guard 14 merges both neighbors to 18 pages
+T4 regression PASS: freeing the final 6 guards restores one 24-page block
+T4 regression PASS: consume the temporary list before restoring the real list
+T4 regression PASS: restore the hidden real list and its exact free count
+T4 regression PASS: return all 32 borrowed pages; no page-count leak
+T4 regression PASS: restored list is ordered, coalesced and count-consistent
+T4 regression ALL PASS
+satp virtual address: 0xffffffffc0208000
+satp physical address: 0x0000000080208000
+slub test: size classes, alignment and object isolation
+slub test: freelist, slab extension and independent page reclaim
+slub test: cache isolation and pointer-based release
+slub test: large contiguous allocations and PMM restoration
+slub test: coexistence with direct PMM allocation
+slub test: mixed allocations and out-of-order release
+slub extended tests succeeded!
+slub_check() succeeded!
+qemu-system-riscv64: terminating on signal 15 from pid 1897 (timeout)

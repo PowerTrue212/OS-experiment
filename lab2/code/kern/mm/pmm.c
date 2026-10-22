@@ -36,10 +36,15 @@ static void check_alloc_page(void);
 
 // init_pmm_manager - initialize a pmm_manager instance
 static void init_pmm_manager(void) {
-#ifdef PMM_USE_LIST_BUDDY
+    // Lab2 T4: use Best-Fit by default; keep the team's Buddy implementations.
+#if defined(PMM_USE_LIST_BUDDY) && defined(PMM_USE_TREE_BUDDY)
+#error "Select at most one Buddy implementation"
+#elif defined(PMM_USE_LIST_BUDDY)
     pmm_manager = &buddy_pmm_manager;
-#else
+#elif defined(PMM_USE_TREE_BUDDY)
     pmm_manager = &tree_buddy_pmm_manager;
+#else
+    pmm_manager = &best_fit_pmm_manager;
 #endif
     cprintf("memory management: %s\n", pmm_manager->name);
     pmm_manager->init();

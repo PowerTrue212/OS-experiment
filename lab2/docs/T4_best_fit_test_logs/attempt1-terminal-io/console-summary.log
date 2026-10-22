@@ -1,0 +1,12 @@
+Lab2 T4 | Best-Fit verification | 2026-10-22T21:34:12+08:00
+Repository: /mnt/d/OS/OS-experiment
+Compiler: 10.2.0
+QEMU emulator version 4.1.1
+PASS: fixed tests and teammate page_init are unchanged
+Build copies: /tmp/ucore-t4-2511440.Ot22Je
+
+[1] Clean source build: PASS
+
+FAILED at runner line 28; inspect saved logs.
+
+FAILED at runner line 33; inspect saved logs.

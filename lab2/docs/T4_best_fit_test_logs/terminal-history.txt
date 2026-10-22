@@ -1,0 +1,45 @@
+Lab2 T4 | Best-Fit verification | 2026-10-22T21:35:53+08:00
+Repository: /mnt/d/OS/OS-experiment
+Compiler: 10.2.0
+QEMU emulator version 4.1.1
+PASS: fixed tests and teammate page_init are unchanged
+Build copies: /tmp/ucore-t4-2511440.sHQNC2
+
+[1] Clean source build: PASS
+[2] Unmodified kernel boot and self-checks:
+memory management: best_fit_pmm_manager
+check_alloc_page() succeeded!
+satp virtual address: 0xffffffffc0206000
+satp physical address: 0x0000000080206000
+slub_check() succeeded!
+QEMU stopped by runner after 8s (exit 124, intentional).
+
+[3] Extra checks (injected into temporary copy only):
+T4 regression PASS: borrow 32 pages; real free count decreases by 32
+T4 regression PASS: reverse registration of 3 x 8 pages merges into 24
+T4 regression PASS: allocate all 24 temporary pages; list becomes empty
+T4 regression PASS: 12 free pages cannot satisfy a contiguous 6-page request
+T4 regression PASS: request 2 chooses the 3-page block and leaves 1 page
+T4 regression PASS: request 4 chooses the exact 4-page block
+T4 regression PASS: split remainder rejoins and two equal 3-page blocks exist
+T4 regression PASS: equal-size candidates choose the lower address
+T4 regression PASS: all candidate allocations returned; guards keep blocks apart
+T4 regression PASS: freeing guard 5 merges predecessor and successor to 9 pages
+T4 regression PASS: freeing guard 9 merges both neighbors to 14 pages
+T4 regression PASS: freeing guard 14 merges both neighbors to 18 pages
+T4 regression PASS: freeing the final 6 guards restores one 24-page block
+T4 regression PASS: consume the temporary list before restoring the real list
+T4 regression PASS: restore the hidden real list and its exact free count
+T4 regression PASS: return all 32 borrowed pages; no page-count leak
+T4 regression PASS: restored list is ordered, coalesced and count-consistent
+T4 regression ALL PASS
+
+[4] Repository course grader:
+  -check page init:                          OK
+  -check best fit:                           OK
+Total Score: 20/20
+
+ALL CHECKS PASSED. Full raw logs saved under:
+/mnt/d/OS/OS-experiment/lab2/docs/T4_best_fit_test_logs
+Real source tested normally; extra regression code is isolated.
+PS D:\OS>
