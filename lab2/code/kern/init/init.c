@@ -1,6 +1,7 @@
 #include <console.h>
 #include <defs.h>
 #include <pmm.h>
+#include <slub.h>
 #include <stdio.h>
 #include <string.h>
 #include <dtb.h>
@@ -38,9 +39,11 @@ int kern_init(void) {
 
     // grade_backtrace();
     pmm_init();  // init physical memory management
+    slub_init();
+    slub_check();
+    cprintf("slub_check() succeeded!\n");
 
     /* do nothing */
     while (1)
         ;
 }
-

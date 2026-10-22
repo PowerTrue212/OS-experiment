@@ -5,12 +5,19 @@ SLASH	:= /
 
 V       := @
 
-#ifndef GCCPREFIX
+TOOLCHAIN_BIN := ../../tools/riscv64-unknown-elf-toolchain-10.2.0-2020.12.8-x86_64-linux-ubuntu14/bin
+ifneq ($(wildcard $(TOOLCHAIN_BIN)/riscv64-unknown-elf-gcc),)
+GCCPREFIX := $(TOOLCHAIN_BIN)/riscv64-unknown-elf-
+else
 GCCPREFIX := riscv64-unknown-elf-
-#endif
+endif
 
 ifndef QEMU
+ifneq ($(wildcard ../../tools/qemu-4.1.1-install/bin/qemu-system-riscv64),)
+QEMU := ../../tools/qemu-4.1.1-install/bin/qemu-system-riscv64
+else
 QEMU := qemu-system-riscv64
+endif
 endif
 
 ifndef SPIKE
@@ -178,7 +185,7 @@ debug: $(UCOREIMG) $(SWAPIMG) $(SFSIMG)
 		-s -S
 
 gdb:
-	riscv64-unknown-elf-gdb \
+	$(GDB) \
     -ex 'file bin/kernel' \
     -ex 'set arch riscv:rv64' \
     -ex 'target remote localhost:1234'
