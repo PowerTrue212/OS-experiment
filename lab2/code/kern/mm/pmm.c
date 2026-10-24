@@ -72,7 +72,7 @@ size_t nr_free_pages(void) {
     return pmm_manager->nr_free_pages();
 }
 
-//lab2 function1 YOUR CODE
+//lab2 function1 2511794
 /* page_init - 根据设备树报告的物理内存信息建立 Page 描述符布局，并把排除
  * OpenSBI、内核镜像和描述符数组之后完整空闲页交给当前 pmm_manager。
  * 无参数、无返回值，由 pmm_init() 调用。 */

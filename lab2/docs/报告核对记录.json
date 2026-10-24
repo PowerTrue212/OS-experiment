@@ -1,0 +1,17 @@
+{
+  "report": "D:\\OS\\OS-experiment\\lab2\\lab2 实验报告.md",
+  "report_characters": 34584,
+  "local_links_checked": 12,
+  "images_checked": 2,
+  "complete_prompt_appendices": 6,
+  "report_matches_prompt_files": true,
+  "original_received_files_preserved": true,
+  "algorithm_source_unchanged": true,
+  "only_code_change": "pmm.c lab2 function1 YOUR CODE -> 2511794",
+  "previous_grade": "20/20",
+  "kernel_tests_rerun": false,
+  "pending_course_work": {
+    "task": "gdb 调试页表查询过程",
+    "status": "组员同步进行，完成后补充调试记录"
+  }
+}
