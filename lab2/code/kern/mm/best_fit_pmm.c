@@ -3,10 +3,63 @@
 #include <best_fit_pmm.h>
 #include <stdio.h>
 
+//lab2 function2-2 2511440
 static free_area_t free_area;
 
 #define free_list (free_area.free_list)
 #define nr_free (free_area.nr_free)
+
+/* A descriptor range must stay inside the global Page array. Check the
+ * length before forming base + n, so an oversized n cannot wrap that pointer. */
+static void
+best_fit_check_range(struct Page *base, size_t n) {
+    assert(n > 0 && pages != NULL && npage > nbase);
+    assert(base >= pages && base < pages + (npage - nbase));
+    assert(n <= (size_t)(pages + (npage - nbase) - base));
+}
+
+/* Insert once in address order, then merge the physically adjacent blocks.
+ * Used both when registering memory and when returning allocated pages. */
+static void
+best_fit_insert_and_merge(struct Page *base) {
+    list_entry_t *next = list_next(&free_list);
+    while (next != &free_list && le2page(next, page_link) < base) {
+        next = list_next(next);
+    }
+    list_entry_t *prev = list_prev(next);
+
+    /* Reject overlapping free ranges, including a repeated interior free. */
+    if (prev != &free_list) {
+        struct Page *p = le2page(prev, page_link);
+        assert(p + p->property <= base);
+    }
+    if (next != &free_list) {
+        struct Page *p = le2page(next, page_link);
+        assert(base + base->property <= p);
+    }
+    list_add_before(next, &base->page_link);
+
+    if (prev != &free_list) {
+        struct Page *p = le2page(prev, page_link);
+        if (p + p->property == base) {
+            p->property += base->property;
+            ClearPageProperty(base);
+            base->property = 0;
+            list_del_init(&base->page_link);
+            base = p;
+        }
+    }
+    next = list_next(&base->page_link);
+    if (next != &free_list) {
+        struct Page *p = le2page(next, page_link);
+        if (base + base->property == p) {
+            base->property += p->property;
+            ClearPageProperty(p);
+            p->property = 0;
+            list_del_init(&p->page_link);
+        }
+    }
+}
 
 static void
 best_fit_init(void) {
@@ -16,21 +69,18 @@ best_fit_init(void) {
 
 static void
 best_fit_init_memmap(struct Page *base, size_t n) {
-    assert(n > 0);
+    best_fit_check_range(base, n);
     for (struct Page *p = base; p != base + n; p++) {
         assert(PageReserved(p));
         p->flags = p->property = 0;
         set_page_ref(p, 0);
+        list_init(&p->page_link);
     }
     base->property = n;
     SetPageProperty(base);
     nr_free += n;
 
-    list_entry_t *le = list_next(&free_list);
-    while (le != &free_list && le2page(le, page_link) < base) {
-        le = list_next(le);
-    }
-    list_add_before(le, &base->page_link);
+    best_fit_insert_and_merge(base);
 }
 
 static struct Page *
@@ -57,55 +107,35 @@ best_fit_alloc_pages(size_t n) {
     }
 
     list_entry_t *prev = list_prev(&best->page_link);
-    list_del(&best->page_link);
-    if (best->property > n) {
+    size_t block_pages = best->property;
+    list_del_init(&best->page_link);
+    if (block_pages > n) {
         struct Page *rest = best + n;
-        rest->property = best->property - n;
+        rest->property = block_pages - n;
         SetPageProperty(rest);
         list_add(prev, &rest->page_link);
     }
     ClearPageProperty(best);
+    best->property = 0;
     nr_free -= n;
     return best;
 }
 
 static void
 best_fit_free_pages(struct Page *base, size_t n) {
-    assert(n > 0);
+    best_fit_check_range(base, n);
     for (struct Page *p = base; p != base + n; p++) {
         assert(!PageReserved(p) && !PageProperty(p));
         p->flags = 0;
+        p->property = 0;
         set_page_ref(p, 0);
+        list_init(&p->page_link);
     }
     base->property = n;
     SetPageProperty(base);
     nr_free += n;
 
-    list_entry_t *le = list_next(&free_list);
-    while (le != &free_list && le2page(le, page_link) < base) {
-        le = list_next(le);
-    }
-    list_add_before(le, &base->page_link);
-
-    le = list_prev(&base->page_link);
-    if (le != &free_list) {
-        struct Page *prev = le2page(le, page_link);
-        if (prev + prev->property == base) {
-            prev->property += base->property;
-            ClearPageProperty(base);
-            list_del(&base->page_link);
-            base = prev;
-        }
-    }
-    le = list_next(&base->page_link);
-    if (le != &free_list) {
-        struct Page *next = le2page(le, page_link);
-        if (base + base->property == next) {
-            base->property += next->property;
-            ClearPageProperty(next);
-            list_del(&next->page_link);
-        }
-    }
+    best_fit_insert_and_merge(base);
 }
 
 static size_t
