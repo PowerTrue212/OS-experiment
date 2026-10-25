@@ -1206,7 +1206,7 @@ sudo gdb
 set pagination off
 attach <PID>
 handle SIGPIPE nostop noprint
-break get_physical_address if addr == 0xffffffffc0206ff8
+break get_physical_address if addr == 0xffffffffc0205ff8
 continue
 ```
 
@@ -1283,7 +1283,7 @@ T2 命中后执行 `bt 3`：
 在 T2 里加上循环内断点：
 
 ```gdb
-break cpu_helper.c:254
+break cpu_helper.c:254 if addr == 0xffffffffc0205ff8
 continue
 p/x i
 p/x ptshift
@@ -1296,7 +1296,7 @@ p/x pa
 
 | 项 | 实测值 | 说明 |
 | --- | --- | --- |
-| `addr` | `0xffffffffc0206ff8` | 被访问的虚拟地址（store 的数据地址） |
+| `addr` | `0xffffffffc0205ff8` | 被访问的虚拟地址（store 的数据地址） |
 | `access_type` | `1` | `MMU_DATA_STORE`（0=load、1=store、2=取指） |
 | `env->satp` | `0x8000000000080204` | MODE=8（Sv39）、PPN=0x80204 → 根表物理地址 `0x80204000` |
 | `i` | `0` | 当前是第 1 级（根级） |
