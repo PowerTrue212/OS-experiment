@@ -2303,14 +2303,14 @@ ffffffffc020128a:	874a                	mv	a4,s2
 ffffffffc020128c:	86ce                	mv	a3,s3
 ffffffffc020128e:	00002617          	auipc	a2,0x2
 ffffffffc0201292:	16a60613          	addi	a2,a2,362 # ffffffffc02033f8 <best_fit_pmm_manager+0x50>
-ffffffffc0201296:	05d00593          	li	a1,93
+ffffffffc0201296:	05f00593          	li	a1,95
 ffffffffc020129a:	00002517          	auipc	a0,0x2
 ffffffffc020129e:	1a650513          	addi	a0,a0,422 # ffffffffc0203440 <best_fit_pmm_manager+0x98>
 ffffffffc02012a2:	f35fe0ef          	jal	ra,ffffffffc02001d6 <__panic>
     uintptr_t free_start = ROUNDUP(PADDR(pages + nr_desc), PGSIZE);
 ffffffffc02012a6:	00002617          	auipc	a2,0x2
 ffffffffc02012aa:	1f260613          	addi	a2,a2,498 # ffffffffc0203498 <best_fit_pmm_manager+0xf0>
-ffffffffc02012ae:	08100593          	li	a1,129
+ffffffffc02012ae:	08300593          	li	a1,131
 ffffffffc02012b2:	00002517          	auipc	a0,0x2
 ffffffffc02012b6:	18e50513          	addi	a0,a0,398 # ffffffffc0203440 <best_fit_pmm_manager+0x98>
 ffffffffc02012ba:	f1dfe0ef          	jal	ra,ffffffffc02001d6 <__panic>
@@ -2318,7 +2318,7 @@ ffffffffc02012ba:	f1dfe0ef          	jal	ra,ffffffffc02001d6 <__panic>
 ffffffffc02012be:	86ae                	mv	a3,a1
 ffffffffc02012c0:	00002617          	auipc	a2,0x2
 ffffffffc02012c4:	1d860613          	addi	a2,a2,472 # ffffffffc0203498 <best_fit_pmm_manager+0xf0>
-ffffffffc02012c8:	09c00593          	li	a1,156
+ffffffffc02012c8:	09e00593          	li	a1,158
 ffffffffc02012cc:	00002517          	auipc	a0,0x2
 ffffffffc02012d0:	17450513          	addi	a0,a0,372 # ffffffffc0203440 <best_fit_pmm_manager+0x98>
 ffffffffc02012d4:	f03fe0ef          	jal	ra,ffffffffc02001d6 <__panic>
