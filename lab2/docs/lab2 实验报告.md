@@ -1226,13 +1226,6 @@ c
 
 #### 四、被观测的那次访存是怎么选的
 
-不背地址，靠符号与反汇编现算（见第九节的"地址为什么会变"）：
-
-```bash
-riscv64-unknown-elf-nm bin/kernel | grep -E "kern_init|kern_entry|boot_page_table"
-riscv64-unknown-elf-objdump -d bin/kernel | sed -n '/<kern_init>:/,/^$/p' | head -20
-```
-
 本机构建下：`kern_init = 0xffffffffc02000d8`，`kern_init+22 = 0xffffffffc02000ee` 处是一条 `sd ra,8(sp)`。在 T3 里核对：
 
 | 命令 | 观察结果 |
