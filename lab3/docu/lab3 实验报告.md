@@ -213,10 +213,14 @@ illegal instruction EPC advance and return: PASS (25/25)
 re-armed supervisor timer and repeated trap return: PASS (40/40)
 Total Score: 100/100
 ```
+![评分结果测试显示](prompt/lab3-make_grade.png)
 
-在另一份未注入评分测试的源码副本中运行 `make qemu`，Best-Fit 自检通过，时钟统计输出 10 次 `100 ticks` 后正常关机。异常指令长度检查也在临时副本中进行，测试副本和脚本在验证后已清理。
+在另一份未注入评分测试的源码副本中运行 `make debug/qemu`，Best-Fit 自检通过，时钟统计输出 10 次 `100 ticks` 后正常关机。异常指令长度检查也在临时副本中进行，测试副本和脚本在验证后已清理。
 
-`make qemu` 和 `make grade` 的终端截图由调试与报告负责人补充。
+![make debug结果显示](prompt/lab3-make_debug_1.png)
+![make debug时钟验证显示](prompt/lab3-make_debug_2.png)
+![可添加的指令验证显示](prompt/lab3-make_gdb.png)
+
 
 ## 六、实验总结与收获
 
