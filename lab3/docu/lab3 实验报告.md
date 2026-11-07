@@ -217,8 +217,34 @@ Total Score: 100/100
 
 在另一份未注入评分测试的源码副本中运行 `make debug/qemu`，Best-Fit 自检通过，时钟统计输出 10 次 `100 ticks` 后正常关机。异常指令长度检查也在临时副本中进行，测试副本和脚本在验证后已清理。
 
+```bash
+cd /mnt/e/OS/RISCV/labcode/lab3/code
+make debug  
+```
+
 ![make debug结果显示](prompt/lab3-make_debug_1.png)
+
 ![make debug时钟验证显示](prompt/lab3-make_debug_2.png)
+
+```bash
+/mnt/e/.../qemu-system-riscv64 -machine virt -nographic -bios default \
+    -device loader,file=bin/ucore.img,addr=0x80200000 -s -S &
+
+'''gdb
+b __alltraps
+c
+info reg pc sp ra
+p/x $stvec
+b trap
+c
+x/36gx $a0
+b *__trapret
+c
+stepi 35
+si
+c
+```
+
 ![可添加的指令验证显示](prompt/lab3-make_gdb.png)
 
 
