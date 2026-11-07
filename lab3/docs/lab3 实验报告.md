@@ -94,7 +94,7 @@ Trap frame 按 36 个 `uintptr_t` 槽位组织，在 RV64 中占 288 字节：�
 
 `__alltraps` 使用 `mv a0, sp` 将 Trap frame 地址作为第一个参数，再调用 `trap()`。C 处理函数返回后进入 `__trapret`，由 `RESTORE_ALL` 恢复状态并执行 `sret`。恢复时先写回 `sstatus` 和 `sepc`，再恢复通用寄存器，最后恢复原来的 `sp`：其他读取仍需以当前 `sp` 指向的 Trap frame 为基址。
 
-#### 提示词与规格（整理版）
+#### 提示词与规格
 
 独立文件：[trap_entry_prompt.md](prompt/trap_entry_prompt.md)。
 
@@ -155,8 +155,7 @@ void exception_handler(struct trapframe *tf);
 
 当前框架和练习文字没有给出 `SHUTDOWN_AFTER` 的具体数值，本次设为 10：每 100 次中断输出一次，累计输出 10 次后关机。如课程另有明确数值，应按课程要求调整。
 
-#### 提示词与规格（整理版）
-
+#### 提示词与规格
 独立文件：[interrupt_exception_prompt.md](prompt/interrupt_exception_prompt.md)。
 
 ````markdown
@@ -261,4 +260,4 @@ c
 
 ### AI 协作开发
 
-实现前需要明确 Trap frame 的实际布局、允许修改的位置和各函数接口；测试后还要对照运行结果检查寄存器恢复、返回位置和时钟重设。提示词与规格在本报告中以整理版展示，不能替代对代码和测试结果的复核。
+实现前需要明确 Trap frame 的实际布局、允许修改的位置和各函数接口；测试后还要对照运行结果检查寄存器恢复、返回位置和时钟重设。
