@@ -1,3 +1,4 @@
 {
-    "C_Cpp.default.compilerPath": "/usr/bin/aarch64-linux-gnu-gcc"
+    "C_Cpp.default.compilerPath": "/usr/bin/aarch64-linux-gnu-gcc",
+    "cmake.sourceDirectory": "/home/powerture/OS-experiment/lab4/code"
 }
